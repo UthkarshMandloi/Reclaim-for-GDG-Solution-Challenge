@@ -1,9 +1,22 @@
 import { db } from './firebase-config.js';
-import { collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { collection, query, orderBy, limit, getDocs, getCountFromServer } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', async () => {
   const leaderboardContainer = document.getElementById('leaderboard-container');
+  const liveUserCountEl = document.getElementById('live-user-count');
   
+  // Fetch and update live user count
+  if (liveUserCountEl) {
+    try {
+      const coll = collection(db, "users");
+      const snapshot = await getCountFromServer(coll);
+      liveUserCountEl.textContent = snapshot.data().count.toLocaleString() + "+";
+    } catch(error) {
+      console.error("Error fetching user count:", error);
+      liveUserCountEl.textContent = "1+"; // Fallback
+    }
+  }
+
   if (leaderboardContainer) {
     try {
       const q = query(collection(db, "users"), orderBy("points", "desc"), limit(10));
@@ -40,7 +53,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       leaderboardContainer.innerHTML = html;
     } catch (error) {
       console.error("Error loading leaderboard:", error);
-      leaderboardContainer.innerHTML = '<p class="text-center text-red-500">Failed to load leaderboard. Create a Firebase project and enable Firestore to see this feature!</p>';
+      leaderboardContainer.innerHTML = '<p class="text-center text-red-500">Failed to load leaderboard. Check Firestore rules.</p>';
     }
   }
 });

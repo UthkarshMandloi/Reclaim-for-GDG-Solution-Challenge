@@ -159,17 +159,20 @@ function setupEventListeners() {
   document.getElementById('save-api-key-btn')?.addEventListener('click', async () => {
     const key = document.getElementById('gemini-api-key-input').value;
     const user = auth.currentUser;
+    
+    // Always save locally first so the app works regardless of Firebase permissions
+    localStorage.setItem('geminiApiKey', key);
+    
     if (user) {
       try {
         await setDoc(doc(db, "users", user.uid), { geminiApiKey: key }, { merge: true });
-        localStorage.setItem('geminiApiKey', key);
-        alert('API Key saved successfully!');
+        alert('API Key saved successfully and synced to cloud!');
       } catch(error) {
-        alert('Error saving API Key: ' + error.message);
+        console.error("Firestore sync error:", error);
+        alert('API Key saved locally and is ready to use!\n\n(Note: Cloud sync failed. If you want it to sync across devices, please check your Firestore Security Rules in the Firebase Console.)');
       }
     } else {
-      localStorage.setItem('geminiApiKey', key);
-      alert('API Key saved locally (please log in to sync across devices)');
+      alert('API Key saved locally. (Log in to sync across devices)');
     }
   });
 }

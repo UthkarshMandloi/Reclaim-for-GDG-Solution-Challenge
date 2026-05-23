@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
           // Call Gemini API
-          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'
@@ -73,6 +73,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
           const data = await response.json();
           if(data.error) {
+            if (data.error.code === 404 || data.error.message.includes("is not found")) {
+               try {
+                 const modelsResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+                 const modelsData = await modelsResponse.json();
+                 const available = modelsData.models ? modelsData.models.map(m => m.name.replace('models/','')).join(", ") : "None";
+                 throw new Error(`Gemini 1.5 Flash is not available for this API Key.\n\nModels your key has access to: ${available}\n\nTip: Go to Google AI Studio (aistudio.google.com) and generate a brand new API key!`);
+               } catch (e) {
+                 if (e.message.includes("Gemini 1.5 Flash is not available")) throw e;
+               }
+            }
             throw new Error(data.error.message);
           }
           
@@ -85,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
           loadingIndicator.classList.add('hidden');
-          alert("Error analyzing image: " + error.message);
+          alert("Error analyzing image: \n" + error.message);
         }
       };
     });
